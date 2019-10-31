@@ -1,6 +1,10 @@
 
 #include "MeMCore.h"
 
+#define 90_DEGREES = 100 // time taken to turn 90 degrees
+#define MOTOR_SPEED = 100 // use either this or line below
+uint8_t motorSpeed = 100;
+
 // DC motors
 MeDCMotor motor1(M1);
 MeDCMotor motor2(M2);
@@ -14,9 +18,9 @@ MeLineFollower lineFinder(PORT_4); /* Line Finder module can only be connected t
 pinMode(S1, INPUT); // detects 100-300Hz
 pinMode(S2, INPUT); // detects > 3000Hz
 // Light sensor
-MeLightSensor lightSensor(PORT_6);
 
-uint8_t motorSpeed = 100;
+
+
 
 /*
 void front_ultrasonic();
@@ -70,27 +74,73 @@ void black_line_sensor();
 
 // detects frequency of sound emitted and executes action
 void frequency_sensor() {
-  if (digitalRead(S1) == HIGH) {
+  if (digitalRead(S1) == HIGH) { // 100-300 Hz detected
     turn(1);
   }
-  else if (digitalRead(S2) == HIGH) {
+  else if (digitalRead(S2) == HIGH) { // > 3000 Hz detected
     turn(2);
+  }
+  else {  // no sound at checkpoint - reached the end
+    play_victory();
   }
 }
 
 // detects what colour paper based on wavelength of light reflected and executes action
 void colour_sensor() {
-  
+  switch(light_value) {
+    case RED: turn(1); break;
+    case GREEN: turn(2); break;
+    case YELLOW: turn(5); break;
+    case PURPLE: turn(3); break;
+    case LIGHT_BLUE: turn(4); break;
+    case BLACK: frequency_sensor(); break;
+    default: break;
 }
 
 // turns in desired direction
 void turn(int direction) {
   switch(direction) {
-    case 1: turn left; break;
-    case 2: turn right; break;
-    case 3: turn left 2 grids; break;
-    case 4: turn right 2 grids; break;
-    case 5: turn 180; break;
+    case 1: motor1.run(motorSpeed); // turns left
+            motor2.run(motorSpeed);
+            delay(90_DEGREES); 
+            motor1.stop();
+            motor2.stop();
+            break;
+    case 2: motor1.run(-motorSpeed); // turns right
+            motor2.run(-motorSpeed);
+            delay(90_DEGREES); 
+            motor1.stop();
+            motor2.stop();
+    case 3: motor1.run(motorSpeed); // first left turn (turn left 2 grids)
+            motor2.run(motorSpeed);
+            delay(90_DEGREES); 
+            motor1.run(-motorSpeed); // moves forward
+            motor2.run(motorSpeed);
+            delay(ONE_GRID);
+            motor1.run(motorSpeed); // second left turn
+            motor2.run(motorSpeed);
+            delay(90_DEGREES); 
+            motor1.stop();
+            motor2.stop();
+            break;
+    case 4: motor1.run(-motorSpeed); // first right turn (turn right 2 grids)
+            motor2.run(-motorSpeed);
+            delay(90_degrees); 
+            motor1.run(-motorSpeed); // moves forward
+            motor2.run(motorSpeed);
+            delay(one_grid);
+            motor1.run(-motorSpeed); // second right turn
+            motor2.run(-motorSpeed);
+            delay(90_DEGREES); 
+            motor1.stop();
+            motor2.stop();
+            break;
+    case 5: motor1.run(-motorSpeed); // turn 180
+            motor2.run(-motorSpeed);
+            delay(2*90_DEGREES); 
+            motor1.stop();
+            motor2.stop();
+            break;
     default: break;
   }
 }
